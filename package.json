@@ -12,5 +12,8 @@
   ],
   "author": "Montu Rana",
   "license": "ISC",
-  "description": ""
+  "description": "",
+  "devDependencies": {
+    "prettier": "^3.4.2"
+  }
 }
