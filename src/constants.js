@@ -1,1 +1,1 @@
-export const DB_NAME='ClearView';
+export const DB_NAME = "ClearView";
