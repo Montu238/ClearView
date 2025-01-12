@@ -20,11 +20,13 @@ const register= AsyncHandler(async(req,res)=>{
              console.log(user);
        }
       //step 3:check for files
-      console.log("Request file Object :",req.files);
       const avatarLocalPath = req.files?.avatar[0]?.path;
-      const coverImageLocalPath = req.files?.coverImage[0]?.path;
        if(!avatarLocalPath){
             throw new ApiError(400,"avatar is required");
+       }
+       let coverImageLocalPath;
+       if (req.files.coverImage && req.files.coverImage.length > 0) {
+        coverImageLocalPath = req.files.coverImage[0].path;
        }
      //step 4: check files are successfully uploaded on cloudinary :avatar,coverImage
      const avatar = await uploadOnCloudinary(avatarLocalPath);
@@ -58,7 +60,5 @@ const register= AsyncHandler(async(req,res)=>{
       new ApiResponse(201,createdUser," user registered successfully")
      );
 });
-
-
 
 export {register};
