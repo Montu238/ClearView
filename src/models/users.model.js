@@ -37,7 +37,6 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: [true, "Password is required"],
-      minlength: [8, "Password should be at least 8 characters"],
     },
     watchHistory: [
       {
@@ -47,6 +46,7 @@ const userSchema = new mongoose.Schema(
     ],
     refreshToken: {
       type: String,
+      default:""
     },
   },
   { timestamps: true }
