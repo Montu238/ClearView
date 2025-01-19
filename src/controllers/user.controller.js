@@ -3,8 +3,32 @@ import { ApiError } from "../utils/apiError.js";
 import { User } from "../models/index.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/apiResponse.js";
+import { COOKIE_OPTION } from "../constants.js";
+import jwt from "jsonwebtoken";
 
+//utility functions for user
+const generateAcessTokenAndRefreshToken = async (user) => {
+     try {
+          const accessToken = await user.generateAccessToken();
+          const refreshToken = await user.generateRefreshToken();
+          user.refreshToken = refreshToken;
+          await user.save();
+          return { accessToken, refreshToken };
+     } catch (error) {
+          throw new ApiError(500, "error in generating tokens");
+     }
+}
 
+const sanitizeUser = (user) => {
+     return {
+          ...user.toObject(),
+          password: undefined,
+          watchHistory: [],
+          refreshToken: undefined,
+     };
+}
+
+//controller functions for user
 const register = AsyncHandler(async (req, res) => {
      //step 1: fields validations
      const { userName, email, fullName, password } = req.body;
@@ -61,30 +85,9 @@ const register = AsyncHandler(async (req, res) => {
      );
 });
 
-const generateAcessTokenAndRefreshToken = async (user) => {
-     try {
-          const accessToken = await user.generateAccessToken();
-          const refreshToken = await user.generateRefreshToken();
-          user.refreshToken = refreshToken;
-          await user.save();
-          return { accessToken, refreshToken };
-     } catch (error) {
-          throw new ApiError(500, "error in generating tokens");
-     }
-}
-
-const sanitizeUser = (user) => {
-     return {
-          ...user.toObject(),
-          password: undefined,
-          watchHistory: [],
-          refreshToken: undefined,
-     };
-}
-
 const loginUser = AsyncHandler(async (req, res) => {
      //step 1:take credentials from request
-     const { userName, email, password } = req.body;
+     const { userName,password } = req.body;
 
      //step 2:check fields 
        if (!password) {
@@ -115,8 +118,8 @@ const loginUser = AsyncHandler(async (req, res) => {
 
      //set cookies and send response 
      res.status(200)
-          .cookie("accessToken", accessToken)
-          .cookie("refreshToken", refreshToken)
+          .cookie("accessToken", accessToken,COOKIE_OPTION)
+          .cookie("refreshToken", refreshToken,COOKIE_OPTION)
           .json(
                new ApiResponse(200, { loggedInUser, accessToken, refreshToken }, "Login successfull")
           )
@@ -125,20 +128,62 @@ const loginUser = AsyncHandler(async (req, res) => {
 
 const logoutUser = AsyncHandler(async (req, res) => {
      // Step 1: Clear cookies (accessToken and refreshToken)
-     res.clearCookie("accessToken");
-     res.clearCookie("refreshToken");
-
-     // Step 2: Optionally, remove the refreshToken from the database
-     const user = await User.findByIdAndUpdate(
-          req.user._id, // Assuming req.user contains the logged-in user's details
-          { $set: { refreshToken: "" } }, // Set refreshToken to empty
-          { new: true } // Return the updated document
-     );
-
-     // Step 3: Send a success response
-     res.status(200).json(
-          new ApiResponse(200,{},"user logged out successfully")
-     );
+     try {
+          res.clearCookie("accessToken");
+          res.clearCookie("refreshToken");
+     
+          // Step 2: Optionally, remove the refreshToken from the database
+          const user = await User.findByIdAndUpdate(
+               req.user._id, // Assuming req.user contains the logged-in user's details
+               { $set: { refreshToken: "" } }, // Set refreshToken to empty
+               { new: true } // Return the updated document
+          );
+          // Step 3: Send a success response
+          res.status(200).json(
+               new ApiResponse(200,{},"user logged out successfully")
+          );
+     } catch (error) {
+          throw new ApiError(501,"Error in logging out");
+     }
 });
 
-export { register, loginUser, logoutUser };
+const refreshAccessToken = AsyncHandler(async(req,res)=>{
+try {
+           //step 1: check refresh token existence in cookies
+           const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
+           if(!refreshToken){
+               throw new ApiError(400,"Refresh token not found!");
+           }
+     
+          //step 2: verify the refresh token
+          const decodedToken = jwt.verify(refreshToken,process.env.REFRESH_TOKEN_SECRET);
+         
+          if(!decodedToken){
+               throw new ApiError(401,"Invalid refresh token");
+          }
+          //step 3: find user by decoded token
+          const user = await User.findById(decodedToken._id);
+
+          if(!user){
+               throw new ApiError(401,"Invalid refresh token");
+          }
+          //step 4: generate new access token and refresh token
+          const tokens= await generateAcessTokenAndRefreshToken(user);
+     
+          //step 5: send new access token and refresh token in response
+          res
+          .status(200)
+          .cookie("accessToken",tokens.accessToken,COOKIE_OPTION)
+          .cookie("refreshToken",tokens.refreshToken,COOKIE_OPTION)
+          .json(
+               new ApiResponse(200,{},"access token refreshed")
+          );
+     
+} catch (error) {
+     throw new ApiError(500,error?.message || "Error refreshing access token");
+}
+
+});
+
+
+export { register, loginUser, logoutUser,refreshAccessToken };
