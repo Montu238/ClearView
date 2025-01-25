@@ -5,28 +5,30 @@ import { verifyJwt } from "../middlewares/auth.middleware.js";
 const userRouter = Router();
 
 
-userRouter.route("/register").post(
+/*userRouter.route("/register").post(
       upload.fields([
             { name: "avatar", maxCount: 1 },      // Field name 'avatar', allow 1 file
             { name: "coverImage", maxCount: 1 }, // Field name 'coverImage', allow 1 file
       ]),
-      userController.register); //tested
+      userController.register); 
       
-userRouter.route("/current-user").get(verifyJwt,userController.getCurrentUser); //tested
+      
+      userRouter.route("/login").post(userController.loginUser); 
+      
+      userRouter.route("/logout").post(verifyJwt,userController.logoutUser); 
+      
+      userRouter.route("/refresh-token").post(userController.refreshAccessToken); */  
 
-userRouter.route("/login").post(userController.loginUser); //tested
 
-userRouter.route("/logout").post(verifyJwt,userController.logoutUser); //tested
+userRouter.route("/current-user").get(verifyJwt,userController.getCurrentUser);
+ 
+userRouter.route("/update").patch(verifyJwt,userController.updateUserDetails); 
 
-userRouter.route("/refresh-token").post(userController.refreshAccessToken); //tested
+userRouter.route("/update/password").patch(verifyJwt,userController.changeCurrentPassword); 
 
-userRouter.route("/update").patch(verifyJwt,userController.updateUserDetails); //tested
+userRouter.route("/update/avatar").patch(verifyJwt,upload.single("avatar"),userController.updateAvatar); 
 
-userRouter.route("/update/password").patch(verifyJwt,userController.changeCurrentPassword); //tested
-
-userRouter.route("/update/avatar").patch(verifyJwt,upload.single("avatar"),userController.updateAvatar); //tested
-
-userRouter.route("/update/cover-image").patch(verifyJwt,upload.single("coverImage"),userController.updateCoverImage); //tested 
+userRouter.route("/update/cover-image").patch(verifyJwt,upload.single("coverImage"),userController.updateCoverImage);  
 
 
 

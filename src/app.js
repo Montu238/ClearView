@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import { SERVER_ADDRESS } from "./constants.js";
 const app = express();
 
 app.use(express.json({
@@ -12,9 +13,10 @@ app.use(cors({ origin: process.env.CORS_ORIGIN, credentials: true }));
 app.use(express.static("public"));
 app.use(cookieParser());
 
-
-//user routes
+import  authRouter  from "./routes/auth.routes.js";
 import userRouter from "./routes/user.routes.js";
-app.use("/api/v1/user",userRouter);
+
+app.use(`${SERVER_ADDRESS}/auth`,authRouter);
+app.use(`${SERVER_ADDRESS}/user`,userRouter);
 
 export {app};
