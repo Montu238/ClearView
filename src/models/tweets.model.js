@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import mongooseAggregatePaginate from 'mongoose-aggregate-paginate-v2';
 
 const tweetSchema = new mongoose.Schema(
       {
@@ -13,7 +14,6 @@ const tweetSchema = new mongoose.Schema(
             }
       },{timestamps:true});
 
-
-
+tweetSchema.plugin(mongooseAggregatePaginate);
 const Tweet = mongoose.model('Tweet', tweetSchema);
 export default Tweet;

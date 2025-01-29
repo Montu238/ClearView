@@ -1,7 +1,7 @@
 import { AsyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
 import { User } from "../models/index.js"
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { uploadOnImageCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { COOKIE_OPTION } from "../constants.js";
 import jwt from "jsonwebtoken";
@@ -58,10 +58,10 @@ const register = AsyncHandler(async (req, res) => {
           coverImageLocalPath = req.files.coverImage[0].path;
      }
      //step 4: check files are successfully uploaded on cloudinary :avatar,coverImage
-     const avatar = await uploadOnCloudinary(avatarLocalPath);
+     const avatar = await uploadOnImageCloudinary(avatarLocalPath);
      let coverImage;
      if (coverImageLocalPath) {
-          coverImage = await uploadOnCloudinary(coverImageLocalPath);
+          coverImage = await uploadOnImageCloudinary(coverImageLocalPath);
      }
      if (!avatar) {
           throw new ApiError(500, "failed to upload on cloudinary")

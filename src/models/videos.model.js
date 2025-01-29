@@ -5,19 +5,17 @@ const videoSchema = new mongoose.Schema(
   {
     owner: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User ",
+      ref: "User",
       required: [true, "Owner is required"],
     },
     title: {
       type: String,
+      index:"text",
       required: [true, "Title is required"],
-      validate: {
-        validator: (v) => /^[a-zA-Z0-9\s]+$/.test(v),
-        message: "Title should only contain letters, numbers, and spaces",
-      },
     },
     description: {
       type: String,
+      index:"text",
       required: [true, "Description is required"],
     },
     videoFile: {
