@@ -7,17 +7,11 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const extractPublicIdFromImageUrl = (publicUrl) => {
-  const regex = /\/upload\/(?:v\d+\/)?([^\.]+)/;
-  const match = publicUrl.match(regex);
-  return match ? match[1] : null;
+const extractPublicIdFromUrl = (publicUrl) => {
+  let publicId = publicUrl.split("/").pop().split(".").shift();
+  return publicId;
 };
 
-const extractPublicIdFromVideoUrl = (videoUrl) => {
-  const regex = /\/(?:clearview_videos\/)([^\/?]+)/; // Matches the ID after '/clearview_videos/'
-  const match = videoUrl.match(regex);
-  return match ? `clearview_videos/${match[1]}` : null; // Prefix the ID with 'clearview_videos/'
-};
 
 const uploadOnImageCloudinary = async (localFilePath) => {
   try {
@@ -51,17 +45,21 @@ const uploadOnImageCloudinary = async (localFilePath) => {
 
 const deleteImageOnCloudinary = async (publicUrl) => {
   try {
-    const publicId = extractPublicIdFromImageUrl(publicUrl);
-    const response = await cloudinary.uploader.destroy(publicId, {
-      resource_type: "image", // or specify "image", "video", etc.
-    });
-    if (response?.result == "ok") {
-      return true;
+    const publicId = extractPublicIdFromUrl(publicUrl);
+
+    // Check if publicId is valid before making the request
+    if (!publicId) {
+      console.log("Invalid public URL or public ID extraction failed.");
+      throw new Error("failed to delete video");
     }
-    return false;
+
+     await cloudinary.uploader.destroy(publicId, {
+      resource_type: "image",
+    });
+
   } catch (error) {
-    console.log("Error deleting file:", error.message);
-    return false;
+    console.log("Error deleting image:", error.message);
+    
   }
 };
 
@@ -98,19 +96,23 @@ const uploadVideoOnCloudinary = async (localFilePath) => {
 
 const deleteVideoOnCloudinary = async (publicUrl) => {
   try {
-    const publicId = extractPublicIdFromVideoUrl(publicUrl);
-    const response = await cloudinary.uploader.destroy(publicId, {
+    const publicId = extractPublicIdFromUrl(publicUrl);
+
+    // Check if publicId is valid before making the request
+    if (!publicId) {
+      console.log("Invalid video URL or public ID extraction failed.");
+      throw new Error("failed to delete video");
+    }
+
+    await cloudinary.uploader.destroy(publicId,{
       resource_type: "video",
     });
-    if (response?.result == "ok") {
-      return true;
-    }
-    return false;
+
   } catch (error) {
-    console.log("Error deleting file:", error.message);
-    return false;
+    console.log("Error deleting video:", error.message);
   }
 };
+
 export {
   uploadOnImageCloudinary,
   deleteImageOnCloudinary,

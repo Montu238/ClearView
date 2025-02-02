@@ -4,12 +4,13 @@ const subscriptionSchema = new mongoose.Schema(
       {
             subscriber:{  //user who is subscribing
                   type: mongoose.Schema.Types.ObjectId,
-                  ref: 'User',
+                  ref: 'User ',
             },
             channel:{  //one whom the subscriber is subscribing 
                   type: mongoose.Schema.Types.ObjectId,
-                  ref: 'Channel',
+                  ref: 'User ',
             }
       },{timestamps:true});
+      
 subscriptionSchema.plugin(mongooseAggregatePaginate);
 export const Subscription = mongoose.model('Subscription', subscriptionSchema);

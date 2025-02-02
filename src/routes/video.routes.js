@@ -6,23 +6,21 @@ const videoRouter = Router();
 
 videoRouter.use(verifyJwt);
 
-videoRouter
-  .route("/")
-  .get(videoController.getAllVideos)
-  .post(
-    upload.fields([
-      {
-        name: "videoFile",
-        maxCount: 1,
-      },
-      {
-        name: "thumbnail",
-        maxCount: 1,
-      },
-    ]),
-    videoController.postVideo
-  );
+videoRouter.route("/").get(videoController.getAllVideos);
 
+videoRouter.route("/upload").post(
+  upload.fields([
+    {
+      name: "videoFile",
+      maxCount: 1,
+    },
+    {
+      name: "thumbnail",
+      maxCount: 1,
+    },
+  ]),
+  videoController.postVideo
+);
 videoRouter
   .route("/:videoId")
   .get(videoController.getVideoById)

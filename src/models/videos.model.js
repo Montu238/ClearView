@@ -5,7 +5,7 @@ const videoSchema = new mongoose.Schema(
   {
     owner: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "User ",
       required: [true, "Owner is required"],
     },
     title: {
@@ -39,7 +39,9 @@ const videoSchema = new mongoose.Schema(
       default: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true,
+    versionKey: false 
+   }
 );
 
 videoSchema.plugin(mongooseAggregatePaginate);

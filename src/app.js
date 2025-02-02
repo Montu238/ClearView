@@ -21,6 +21,6 @@ import videoRouter from "./routes/video.routes.js";
 
 app.use(`${SERVER_ADDRESS}/auth`, authRouter);
 app.use(`${SERVER_ADDRESS}/users`, userRouter);
-app.use(`${SERVER_ADDRESS}/videos`, videoRouter);
+app.use(`${SERVER_ADDRESS}/video`, videoRouter);
 
 export { app };

@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+import { User } from "../models/index.js";
 import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { AsyncHandler } from "../utils/asyncHandler.js";
@@ -19,11 +21,11 @@ const getAllVideos = AsyncHandler(async (req, res) => {
   if (query) filter.$text = { $search: query };
   if (userId) filter.owner = userId;
 
-  const videos = await Video.find(filter, { isPublished: -1 })
+  const videos = await Video.find(filter)
     .sort({ [sortBy]: sortType === "desc" ? -1 : 1 })
+    .populate("owner", "userName avatar")
     .skip((pageNumber - 1) * limitNumber)
-    .limit(limitNumber)
-    .lean();
+    .limit(limitNumber);
 
   const totalVideos = await Video.countDocuments(filter);
   const totalPages = Math.ceil(totalVideos / limitNumber);
@@ -40,20 +42,20 @@ const getAllVideos = AsyncHandler(async (req, res) => {
         "no videos found"
       )
     );
+  } else {
+    res.status(200).json(
+      new ApiResponse(
+        200,
+        {
+          videos,
+          currentPage: pageNumber,
+          totalPages,
+          totalVideos,
+        },
+        "success"
+      )
+    );
   }
-
-  res.status(200).json(
-    new ApiResponse(
-      200,
-      {
-        videos,
-        currentPage: pageNumber,
-        totalPages,
-        totalVideos,
-      },
-      "success"
-    )
-  );
 });
 
 const postVideo = AsyncHandler(async (req, res) => {
@@ -69,14 +71,14 @@ const postVideo = AsyncHandler(async (req, res) => {
     }
     const uploadedVideo = await uploadVideoOnCloudinary(videoFileLocalPath);
     const uploadedThumbnail = await uploadOnImageCloudinary(thumbnailLocalPath);
-    const duration = uploadedVideo.metadata.duration;
+    const duration = uploadedVideo.duration;
     const video = await Video.create({
       title,
       description,
       duration,
       videoFile: uploadedVideo.url,
       thumbnail: uploadedThumbnail.url,
-      owner: req.user._id,
+      owner: new mongoose.Types.ObjectId(req.user._id),
     });
     res
       .status(201)
@@ -88,7 +90,10 @@ const postVideo = AsyncHandler(async (req, res) => {
 
 const getVideoById = AsyncHandler(async (req, res) => {
   const { videoId } = req.params;
-  const video = await Video.findById(videoId);
+  const video = await Video.findById(videoId).populate(
+    "owner",
+    "userName avatar"
+  );
   if (!video) {
     throw new ApiError(404, "video not found");
   }
@@ -103,8 +108,12 @@ const deleteVideo = AsyncHandler(async (req, res) => {
   if (video.owner.toString() !== req.user._id.toString()) {
     throw new ApiError(403, "you are not authorized to delete this video");
   }
-  await deleteVideoOnCloudinary(video.videoFile);
-  await deleteImageOnCloudinary(video.thumbnail);
+  try {
+    await deleteVideoOnCloudinary(video.videoFile);
+    await deleteImageOnCloudinary(video.thumbnail);
+  } catch (error) {
+    throw new ApiError(500, error.message || "failed to delete video");
+  }
   await Video.findByIdAndDelete(videoId);
   res.status(200).json(new ApiResponse(200, {}, "video deleted successfully"));
 });
@@ -112,32 +121,31 @@ const deleteVideo = AsyncHandler(async (req, res) => {
 const updateVideo = AsyncHandler(async (req, res) => {
   const { videoId } = req.params;
   const { title, description } = req.body;
-  if(!title || !description){
-      throw new ApiError(401,"title and description both are required")
+  if (!title || !description) {
+    throw new ApiError(401, "title and description both are required");
   }
-  const video = await Video.findByIdAndUpdate(
-      videoId,
-      {$set:{title,description}}
-  );
-      if(!result){
-      throw new ApiError(404,"video not found")
-      }
-      res.status(200).json(
-            new ApiResponse(200,video,"video details updated successfully")
-      );
+  const video = await Video.findByIdAndUpdate(videoId, {
+    $set: { title, description },
+  });
+  if (!result) {
+    throw new ApiError(404, "video not found");
+  }
+  res
+    .status(200)
+    .json(new ApiResponse(200, video, "video details updated successfully"));
 });
 
 const togglePublishStatus = AsyncHandler(async (req, res) => {
   const { videoId } = req.params;
-  const result = await Video.findByIdAndUpdate(
-      videoId,
-      {$set:{isPublished:{ $not: "$isPublished" }}}
-);
-if(!result){
-      throw new ApiError(404,"video not found");
-
-}
-res.status(200).json(new ApiResponse(200,{},"toggled publish status successfully"));
+  const result = await Video.findById(videoId);
+  if (!result) {
+    throw new ApiError(404, "video not found");
+  }
+  result.isPublished = !result.isPublished;
+  await result.save();
+  res
+    .status(200)
+    .json(new ApiResponse(200, {}, "toggled publish status successfully"));
 });
 
 export const videoController = {
