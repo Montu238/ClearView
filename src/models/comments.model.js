@@ -8,11 +8,13 @@ const commentSchema = new mongoose.Schema(
           },
           video:{
             type:mongoose.Schema.Types.ObjectId,
-            ref:'Video'
+            ref:'Video',
+            required:[true,"Video is required!"]
           },
-          owner:{
+          commentedBy:{
             type:mongoose.Schema.Types.ObjectId,
-            ref:'User '
+            ref:'User ',
+            required:[true,"Commented by is required!"]
           }
       },{timestamps:true});
 

@@ -18,9 +18,14 @@ app.use(cookieParser());
 import authRouter from "./routes/auth.routes.js";
 import userRouter from "./routes/user.routes.js";
 import videoRouter from "./routes/video.routes.js";
+import likeRouter from "./routes/like.routes.js";
+import commentRouter from "./routes/comment.routes.js";
+
 
 app.use(`${SERVER_ADDRESS}/auth`, authRouter);
 app.use(`${SERVER_ADDRESS}/users`, userRouter);
 app.use(`${SERVER_ADDRESS}/video`, videoRouter);
+app.use(`${SERVER_ADDRESS}/like`, likeRouter);
+app.use(`${SERVER_ADDRESS}/comment`, commentRouter);
 
 export { app };
