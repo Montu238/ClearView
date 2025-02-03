@@ -18,7 +18,14 @@ const getAllVideos = AsyncHandler(async (req, res) => {
   const limitNumber = parseInt(limit);
 
   let filter = {};
-  if (query) filter.$text = { $search: query };
+  if (query) {
+    filter = {
+      $or: [
+        { title: { $regex: query, $options: 'i' } },
+        { description: { $regex: query, $options: 'i' } }
+      ]
+    };
+  }
   if (userId) filter.owner = userId;
 
   const videos = await Video.find(filter)
@@ -124,11 +131,23 @@ const updateVideo = AsyncHandler(async (req, res) => {
   if (!title || !description) {
     throw new ApiError(401, "title and description both are required");
   }
-  const video = await Video.findByIdAndUpdate(videoId, {
-    $set: { title, description },
-  });
-  if (!result) {
+  const video = await Video.findById(videoId);
+  if (!video) {
     throw new ApiError(404, "video not found");
+  }
+  if (video.owner.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "you are not authorized to update this video");
+  }
+  video.title = title;
+  video.description = description;
+  if (req.file) {
+    const thumbnailLocalPath = req.file.path;
+    const uploadedThumbnail = await uploadOnImageCloudinary(thumbnailLocalPath);
+    await deleteImageOnCloudinary(video.thumbnail);
+    video.thumbnail = uploadedThumbnail.url;
+    await video.save();
+  } else {
+    await video.save();
   }
   res
     .status(200)
@@ -140,6 +159,9 @@ const togglePublishStatus = AsyncHandler(async (req, res) => {
   const result = await Video.findById(videoId);
   if (!result) {
     throw new ApiError(404, "video not found");
+  }
+  if(result.owner.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "you are not authorized to toggle publish status");
   }
   result.isPublished = !result.isPublished;
   await result.save();

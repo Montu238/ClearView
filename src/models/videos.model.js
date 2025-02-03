@@ -10,12 +10,10 @@ const videoSchema = new mongoose.Schema(
     },
     title: {
       type: String,
-      index:"text",
       required: [true, "Title is required"],
     },
     description: {
       type: String,
-      index:"text",
       required: [true, "Description is required"],
     },
     videoFile: {
@@ -43,7 +41,7 @@ const videoSchema = new mongoose.Schema(
     versionKey: false 
    }
 );
-
+videoSchema.index({ title: 'text', description: 'text' });
 videoSchema.plugin(mongooseAggregatePaginate);
 
 const Video = mongoose.model("Video", videoSchema);
