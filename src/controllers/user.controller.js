@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { AsyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
 import { User } from "../models/index.js";
@@ -163,17 +164,28 @@ const getUserChannelProfile = AsyncHandler(async (req, res) => {
       },
       {
         $addFields: {
-          subscriberCount: { $size: "$subcribers" },
-          subscribedToCount: { $size: "$subscribedTo" },
-          isSubscribed: {
+            isSubscribed: {
             $cond: {
-              if: { $in: [req.user?._id, "$subcribers.subscriber"] },
+              if: { 
+                $in: [
+                  new mongoose.Types.ObjectId(req.user?._id),
+                  {
+                    $map: {
+                      input: "$subcribers",
+                      as: "sub",
+                      in: "$$sub.subscriber" // Extract only `subscriber` field
+                    }
+                  }
+                ]
+              },
               then: true,
               else: false,
-            },
           },
         },
-      },
+        subscriberCount: { $size: "$subcribers" },
+        subscribedToCount: { $size: "$subscribedTo" },
+      }
+    },
       {
         $project: {
           userName: 1,
@@ -189,7 +201,7 @@ const getUserChannelProfile = AsyncHandler(async (req, res) => {
     if (!channelProfile?.length) {
       throw new ApiError(404, "user channel profile not found");
     }
-    res
+       res
       .status(200)
       .json(
         new ApiResponse(
@@ -199,7 +211,7 @@ const getUserChannelProfile = AsyncHandler(async (req, res) => {
         )
       );
   } catch (error) {
-    throw new ApiError(500, "error getting user channel profile");
+    throw new ApiError(500,error.message);
   }
 });
 
