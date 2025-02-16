@@ -21,6 +21,8 @@ import videoRouter from "./routes/video.routes.js";
 import likeRouter from "./routes/like.routes.js";
 import commentRouter from "./routes/comment.routes.js";
 import subscriptionRouter from "./routes/subscription.routes.js";
+import playlistRouter from "./routes/playlist.routes.js";
+import tweetRouter from "./routes/tweet.routes.js";
 
 app.use(`${SERVER_ADDRESS}/auth`, authRouter);
 app.use(`${SERVER_ADDRESS}/users`, userRouter);
@@ -28,5 +30,9 @@ app.use(`${SERVER_ADDRESS}/video`, videoRouter);
 app.use(`${SERVER_ADDRESS}/like`, likeRouter);
 app.use(`${SERVER_ADDRESS}/comment`, commentRouter);
 app.use(`${SERVER_ADDRESS}/subscription`, subscriptionRouter);
+app.use(`${SERVER_ADDRESS}/playlist`, playlistRouter);
+app.use(`${SERVER_ADDRESS}/tweet`, tweetRouter);
+
+
 
 export { app };

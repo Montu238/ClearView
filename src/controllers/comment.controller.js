@@ -15,8 +15,9 @@ const getVideoComments = AsyncHandler(async (req, res) => {
     .sort({ createdAt: -1 });
   if (comments?.length < 1) {
     res.status(200).json(new ApiResponse(200, [], "no one has commented yet"));
-  }
+  }else{
   res.status(200).json(new ApiResponse(200, comments));
+  }
 });
 
 const addComment = AsyncHandler(async (req, res) => {
